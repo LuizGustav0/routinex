@@ -24,14 +24,15 @@ const DaySchedule = ({ schedule, scrollRef }: DayScheduleProps) => {
 
   useEffect(() => {
     const currentDate = new Date();
-    const day = currentDate.getDate();
-    const month = currentDate.getMonth() + 1;
-    const currentDateString = `${day < 10 ? '0' + day : day}/${month < 10 ? '0' + month : month}`;
-    if (schedule.date === currentDateString) {
+    const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
+    const currentDayOfWeek = daysOfWeek[currentDate.getDay()];
+  
+    if (schedule.day === currentDayOfWeek) {
       setIsOpen(true);
       scrollRef.current.scrollTo({ y: 10, animated: true });
     }
   }, []);
+  
 
   return (
     <View style={styles.daySchedule}>
