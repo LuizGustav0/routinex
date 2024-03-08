@@ -17,15 +17,17 @@ type Schedule = {
 type DayScheduleProps = {
   schedule: Schedule;
   scrollRef: any;
+  isShowEdit: boolean;
 };
 
-const DaySchedule = ({ schedule, scrollRef }: DayScheduleProps) => {
+const DaySchedule = ({ schedule, scrollRef, isShowEdit }: DayScheduleProps) => {
   const [isOpen, setIsOpen] = useState(false);
 
   useEffect(() => {
     const currentDate = new Date();
     const daysOfWeek = ['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SAB'];
     const currentDayOfWeek = daysOfWeek[currentDate.getDay()];
+
   
     if (schedule.day === currentDayOfWeek) {
       setIsOpen(true);
@@ -54,6 +56,7 @@ const DaySchedule = ({ schedule, scrollRef }: DayScheduleProps) => {
               time={activity.time}
               description={activity.description}
               status={activity.status}
+              isShowEdit={isShowEdit}
             />
           ))}
         </View>
