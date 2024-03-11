@@ -4,13 +4,14 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import ModalTask  from '../ModalTask/ModalTask';
 
 type ActivityItemProps = {
+  id: string;
   time: string;
   description: string;
   status: string;
   day?:string;
 };
 
-const ActivityItem = ({ time, description, status, day }: ActivityItemProps) => {
+const ActivityItem = ({ id,time, description, status, day }: ActivityItemProps) => {
   const [showModal, setShowModal] = useState(false);
 
 
@@ -52,7 +53,7 @@ const ActivityItem = ({ time, description, status, day }: ActivityItemProps) => 
         </TouchableOpacity>
       </View>
 
-      <ModalTask isVisible={showModal} day={day || ''} isEdit={true} onClose={() => { setShowModal(false) }} initialTime={time} endTime={'12:00'} textTask={description}  />
+      <ModalTask isVisible={showModal} day={day || ''} isEdit={true} onClose={() => { setShowModal(false) }} initialTime={time} endTime={'12:00'} textTask={description} id={id}  />
     </View>
   );
 };

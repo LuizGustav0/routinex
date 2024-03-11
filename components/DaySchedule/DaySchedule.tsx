@@ -60,9 +60,10 @@ const DaySchedule = ({ schedule, scrollRef }: DayScheduleProps) => {
         <View style={styles.activitiesList}>
           {schedule.activities.length > 0 && schedule.activities.map((activity, index) => (
             <>
-            <Text>{activity.id}</Text>
+        
             <ActivityItem
               key={index}
+              id={activity.id}
               time={activity.time}
               day={schedule.day}
               description={activity.description}

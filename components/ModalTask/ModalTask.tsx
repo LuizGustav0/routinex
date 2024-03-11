@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Modal, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
 import { useScheduleContext } from '../../app/context/ScheduleContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import UUIDGenerator from 'react-native-uuid';
 
 type ModalTaskProps = {
   isVisible: boolean;
@@ -11,9 +12,10 @@ type ModalTaskProps = {
   initialTime?: string;
   endTime?: string;
   textTask?: string;
+  id?: string;
 };
 
-const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, initialTime, endTime, textTask }) => {
+const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, initialTime, endTime, textTask,id }) => {
   const { scheduleData, setScheduleData } = useScheduleContext();
 
   const [timeInitial, setTimeInitial] = useState('');
@@ -34,7 +36,6 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
     }
   }, [initialTime, endTime, textTask, isEdit]);
   
-  console.log(textTask)
   
 
   const formatarHora = (hora: string) => {
@@ -57,7 +58,7 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
   const AddTask = () => {
  
     const dayIndex = scheduleData.findIndex((item) => item.day === day);
-    const uuid = uuidv4();
+    const uuid = UUIDGenerator.v4();
 
     const newActivity = { id: uuid, time: timeInitial, endTime: timeEnd, description: task, status: 'PENDING' };
     const activities = [...scheduleData[dayIndex].activities, newActivity];
@@ -82,6 +83,27 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
     setTimeEnd('');
     setTask('');  
     onClose();  
+  }
+
+  const UpdateTask = () => {
+    console.log(JSON.stringify(scheduleData))
+    const dayIndex = scheduleData.findIndex((item) => item.day === day);
+    if (dayIndex === -1) {
+      console.error('Day not found');
+      return;
+    }
+  
+    const activities = scheduleData[dayIndex].activities.map((activity: { id: string | undefined; }) =>
+      activity.id === id ? { ...activity, time: timeInitial, endTime: timeEnd, description: task } : activity
+    );
+  
+    setScheduleData((prevScheduleData) => {
+      const newScheduleData = [...prevScheduleData];
+      newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+      return newScheduleData;
+    });
+
+    clearInput()
   }
 
   const DeleteTask = () => {}
@@ -138,7 +160,7 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
                 <Text style={styles.buttonText}>Cancelar</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity onPress={AddTask} style={styles.button}>
+            <TouchableOpacity onPress={isEdit ? UpdateTask : AddTask} style={styles.button}>
                 <Text style={styles.buttonText}>Salvar</Text>
             </TouchableOpacity>
         </View>
