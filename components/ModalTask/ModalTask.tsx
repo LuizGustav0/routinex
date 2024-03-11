@@ -1,14 +1,41 @@
-import React, { useState } from 'react';
-import { View, Text, Modal, TextInput, Button, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Modal, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { useScheduleContext } from '../../app/context/ScheduleContext';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
 type ModalTaskProps = {
   isVisible: boolean;
+  day: string;
   onClose: () => void;
+  isEdit?: boolean;
+  initialTime?: string;
+  endTime?: string;
+  textTask?: string;
 };
 
-const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, onClose }) => {
-  const [horaInicio, setHoraInicio] = useState('');
-  const [horaFim, setHoraFim] = useState('');
+const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, initialTime, endTime, textTask }) => {
+  const { scheduleData, setScheduleData } = useScheduleContext();
+
+  const [timeInitial, setTimeInitial] = useState('');
+  const [timeEnd, setTimeEnd] = useState('');
+  const [task, setTask] = useState('');
+
+  useEffect(() => {
+    if (isEdit) {
+      if (initialTime) {
+        setTimeInitial(initialTime);
+      }
+      if (endTime) {
+        setTimeEnd(endTime);
+      }
+      if (textTask) {
+        setTask(textTask);
+      }
+    }
+  }, [initialTime, endTime, textTask, isEdit]);
+  
+  console.log(textTask)
+  
 
   const formatarHora = (hora: string) => {
     let horaFormatada = hora.replace(/\D/g, '').replace(/(\d{2})(\d{2})/, '$1:$2');
@@ -25,7 +52,39 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, onClose }) => {
     horaFormatada = `${horas.toString().padStart(2, '0')}:${minutos.toString().padStart(2, '0')}`;
     return horaFormatada;
   }
+
+
+  const AddTask = () => {
+ 
+    const dayIndex = scheduleData.findIndex((item) => item.day === day);
+    const uuid = uuidv4();
+
+    const newActivity = { id: uuid, time: timeInitial, endTime: timeEnd, description: task, status: 'PENDING' };
+    const activities = [...scheduleData[dayIndex].activities, newActivity];
+    activities.sort((a, b) => {
+      const [aHours, aMinutes] = a.time.split(':').map(Number);
+      const [bHours, bMinutes] = b.time.split(':').map(Number);
+      return (aHours * 60 + aMinutes) - (bHours * 60 + bMinutes);
+    });
   
+    setScheduleData((prevScheduleData) => {
+      const newScheduleData = [...prevScheduleData];
+      newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+      return newScheduleData;
+    });
+
+    clearInput()
+
+  }
+
+  const clearInput = () => {
+    setTimeInitial('');
+    setTimeEnd('');
+    setTask('');  
+    onClose();  
+  }
+
+  const DeleteTask = () => {}
   
 
   return (
@@ -35,42 +94,59 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, onClose }) => {
       visible={isVisible}
       onRequestClose={onClose}
     >
-      <View style={styles.centeredView}>
-        <View style={styles.modalView}>
-          <View style={styles.row}>
-          <TextInput
-            style={[styles.input, styles.halfInput]}
-            placeholder="Hora de Início"
-            value={horaInicio}
-            onBlur={() => setHoraInicio(formatarHora(horaInicio))}
-            onChangeText={(text) => setHoraInicio(text)}
-            maxLength={5}
-            keyboardType="numeric"
-          />
-          <TextInput
-            style={[styles.input, styles.halfInput]}
-            placeholder="Hora de Término"
-            value={horaFim}
-            onBlur={() => setHoraFim(formatarHora(horaFim))}
-            onChangeText={(text) => setHoraFim(text)}
-            maxLength={5}
-            keyboardType="numeric"
-          />
 
-          </View>
-
-          <View style={styles.row}>
-              <TextInput
+<View style={styles.centeredView}>
+    <View style={styles.modalView}>
+        {isEdit && (
+            <TouchableOpacity onPress={DeleteTask} style={styles.iconContainer}>
+                <Icon name="trash" size={20} color="grey" />
+            </TouchableOpacity>
+        )}
+        <View style={styles.row}>
+            <TextInput
                 style={[styles.input, styles.halfInput]}
-                placeholder="Tarefa"
-                multiline={true}        
-              />
-          </View>
-          <TouchableOpacity onPress={onClose} style={styles.button}>
-            <Text style={styles.buttonText}>Salvar</Text>
-          </TouchableOpacity>
+                placeholder="Hora de Início"
+                value={timeInitial}
+                onBlur={() => setTimeInitial(formatarHora(timeInitial))}
+                onChangeText={(text) => setTimeInitial(text)}
+                maxLength={5}
+                keyboardType="numeric"
+            />
+            <TextInput
+                style={[styles.input, styles.halfInput]}
+                placeholder="Hora de Término"
+                value={timeEnd}
+                onBlur={() => setTimeEnd(formatarHora(timeEnd))}
+                onChangeText={(text) => setTimeEnd(text)}
+                maxLength={5}
+                keyboardType="numeric"
+            />
         </View>
-      </View>
+
+        <View style={styles.row}>
+            <TextInput
+                style={[styles.input, styles.fullInput]}
+                placeholder="Tarefa"
+                multiline={true}
+                value={task}
+                onChangeText={(text) => setTask(text)}
+            />
+        </View>
+
+        <View style={styles.row}>
+            <TouchableOpacity onPress={clearInput} style={styles.buttonCancel}>
+                <Text style={styles.buttonText}>Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity onPress={AddTask} style={styles.button}>
+                <Text style={styles.buttonText}>Salvar</Text>
+            </TouchableOpacity>
+        </View>
+    </View>
+</View>
+
+
+
     </Modal>
   );
 };
@@ -101,6 +177,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     width: '100%',
   },
+  iconContainer: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'flex-end',
+    width: '100%',
+    marginBottom: 10,
+  },
   input: {
     height: 40,
     borderColor: 'gray',
@@ -124,6 +207,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 5,
     backgroundColor: '#3498db',
+  },
+  buttonCancel: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 5,
+    backgroundColor: '#FF6666',
+    marginRight: 10,
   },
   buttonText: {
     color: '#fff',

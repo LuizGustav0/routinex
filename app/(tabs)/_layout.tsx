@@ -6,8 +6,9 @@ import { Pressable } from 'react-native';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
+import { ScheduleProvider } from '../context/ScheduleContext';
 
-// You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
+
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
   color: string;
@@ -19,6 +20,7 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <ScheduleProvider>
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
@@ -26,6 +28,8 @@ export default function TabLayout() {
         // to prevent a hydration error in React Navigation v6.
         headerShown: useClientOnlyValue(false, true),
       }}>
+
+
       <Tabs.Screen
         name="index"
         options={{
@@ -47,6 +51,7 @@ export default function TabLayout() {
           ),
         }}
       />
+  
       <Tabs.Screen
         name="two"
         options={{
@@ -55,5 +60,6 @@ export default function TabLayout() {
         }}
       />
     </Tabs>
+    </ScheduleProvider>
   );
 }

@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import ActivityItem from '../ActivityItem/ActivityItem';
-import { useNavigation } from '@react-navigation/native';
 import ModalTask  from '../ModalTask/ModalTask';
 
 
 type Activity = {
+  id: string;
   time: string;
   description: string;
   status: string;
@@ -20,11 +20,9 @@ type Schedule = {
 type DayScheduleProps = {
   schedule: Schedule;
   scrollRef: any;
-  isShowEdit: boolean;
 };
 
-const DaySchedule = ({ schedule, scrollRef, isShowEdit }: DayScheduleProps) => {
-  const navigation = useNavigation();
+const DaySchedule = ({ schedule, scrollRef }: DayScheduleProps) => {
 
   const [isOpen, setIsOpen] = useState(false);
   const [showModal, setShowModal] = useState(false);
@@ -61,28 +59,31 @@ const DaySchedule = ({ schedule, scrollRef, isShowEdit }: DayScheduleProps) => {
       {isOpen && (
         <View style={styles.activitiesList}>
           {schedule.activities.length > 0 && schedule.activities.map((activity, index) => (
+            <>
+            <Text>{activity.id}</Text>
             <ActivityItem
               key={index}
               time={activity.time}
+              day={schedule.day}
               description={activity.description}
               status={activity.status}
-              isShowEdit={isShowEdit}
             />
+
+        </>
           ))}
 
 
-          {schedule.activities.length <= 0 &&
+ 
             <View style={styles.activitiesList}>
-               <TouchableOpacity onPress={openModal} style={styles.button}>
-            <Text style={styles.buttonText}>Adicionar Tarefa</Text>
-          </TouchableOpacity>
+              <TouchableOpacity onPress={openModal}   style={[
+                styles.button,
+                { backgroundColor: schedule.activities.length > 0 ? '#D3D3D3' : '#3498db' },
+                ]}>
+                <Text style={styles.buttonText}>Adicionar Tarefa</Text>
+              </TouchableOpacity>   
+            </View>           
 
-          <ModalTask isVisible={showModal} onClose={() => setShowModal(false)} />
-      
-              </View>
-          } 
-
-
+            <ModalTask isVisible={showModal} isEdit={false} day={schedule.day} onClose={() => setShowModal(false)} />
         </View>
       )}
     </View>
@@ -110,7 +111,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 5,
     marginRight: 10,
-    backgroundColor: '#3498db',
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',

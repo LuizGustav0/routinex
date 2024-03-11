@@ -1,15 +1,19 @@
-import React from 'react';
+import React, {useState} from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
+import ModalTask  from '../ModalTask/ModalTask';
 
 type ActivityItemProps = {
   time: string;
   description: string;
   status: string;
-  isShowEdit: boolean
+  day?:string;
 };
 
-const ActivityItem = ({ time, description, status, isShowEdit }: ActivityItemProps) => {
+const ActivityItem = ({ time, description, status, day }: ActivityItemProps) => {
+  const [showModal, setShowModal] = useState(false);
+
+
   return (
     <View style={styles.activityItem}>
       <View style={styles.container}>
@@ -17,16 +21,12 @@ const ActivityItem = ({ time, description, status, isShowEdit }: ActivityItemPro
           {time} - {description}
         </Text>
 
-        {isShowEdit &&
+     
         <View style={styles.iconContainer}>
-          <TouchableOpacity onPress={() => console.log('Editar pressionado')}>
-            <Icon name="edit" size={20} color="black" style={styles.icon} />
+          <TouchableOpacity onPress={() => setShowModal(true)}>
+            <Icon name="edit" size={20} color="grey" />
           </TouchableOpacity>
-          <TouchableOpacity onPress={() => console.log('Deletar pressionado')}>
-            <Icon name="trash" size={20} color="black" />
-          </TouchableOpacity>
-        </View>
-        }
+        </View>        
       </View>
 
       <View style={styles.containerButtons}>
@@ -51,6 +51,8 @@ const ActivityItem = ({ time, description, status, isShowEdit }: ActivityItemPro
           <Text style={styles.buttonText}>Conclui 😁</Text>
         </TouchableOpacity>
       </View>
+
+      <ModalTask isVisible={showModal} day={day || ''} isEdit={true} onClose={() => { setShowModal(false) }} initialTime={time} endTime={'12:00'} textTask={description}  />
     </View>
   );
 };
@@ -71,9 +73,6 @@ const styles = StyleSheet.create({
   },
   iconContainer: {
     flexDirection: 'row',
-  },
-  icon: {
-    paddingRight: 15, 
   },
   containerButtons: {
     flexDirection: 'row',
