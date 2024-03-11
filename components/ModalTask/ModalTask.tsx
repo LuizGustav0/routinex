@@ -74,8 +74,7 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
       return newScheduleData;
     });
 
-    clearInput()
-
+    clearInput();
   }
 
   const clearInput = () => {
@@ -103,10 +102,26 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
       return newScheduleData;
     });
 
-    clearInput()
+    clearInput();
   }
 
-  const DeleteTask = () => {}
+  const DeleteTask = () => {
+    const dayIndex = scheduleData.findIndex((item) => item.day === day);
+    if (dayIndex === -1) {
+      console.error('Day not found');
+      return;
+    }
+  
+    const activities = scheduleData[dayIndex].activities.filter((activity: { id: string | undefined; }) => activity.id !== id);
+  
+    setScheduleData((prevScheduleData) => {
+      const newScheduleData = [...prevScheduleData];
+      newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+      return newScheduleData;
+    });
+
+    clearInput();
+  }
   
 
   return (
