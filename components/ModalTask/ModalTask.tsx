@@ -3,6 +3,9 @@ import { View, Text, Modal, TextInput, StyleSheet, TouchableOpacity } from 'reac
 import { useScheduleContext } from '../../app/context/ScheduleContext';
 import Icon from 'react-native-vector-icons/FontAwesome';
 import UUIDGenerator from 'react-native-uuid';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Notifications from 'expo-notifications';
+
 
 type ModalTaskProps = {
   isVisible: boolean;
@@ -55,12 +58,16 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
   }
 
 
-  const AddTask = () => {
- 
+  const AddTask = async () => {
+
     const dayIndex = scheduleData.findIndex((item) => item.day === day);
     const uuid = UUIDGenerator.v4();
 
-    const newActivity = { id: uuid, time: timeInitial, endTime: timeEnd, description: task, status: 'PENDING' };
+    const notificationId = await scheduleWeeklyNotification(day, timeInitial, task);
+    
+    
+    const newActivity = { id: uuid, time: timeInitial, endTime: timeEnd, description: task, status: 'PENDING', notificationId: notificationId };
+    
     const activities = [...scheduleData[dayIndex].activities, newActivity];
     activities.sort((a, b) => {
       const [aHours, aMinutes] = a.time.split(':').map(Number);
@@ -71,11 +78,59 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
     setScheduleData((prevScheduleData) => {
       const newScheduleData = [...prevScheduleData];
       newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+  
+      
+      AsyncStorage.setItem('scheduleData', JSON.stringify(newScheduleData)).then(() => {
+        console.log('Data saved to AsyncStorage');
+      }).catch((error) => {
+        console.error('Error saving data to AsyncStorage:', error);
+      });
+  
       return newScheduleData;
     });
 
-    clearInput();
+  
+    clearInput(); 
   }
+
+  async function scheduleWeeklyNotification(day: string, time: string, description: string) {
+    
+  const result =  await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Lembrete da sua rotina',
+        body: description,
+      },
+      trigger: {
+        weekday: getWeekdayNumber(day),
+        hour: parseInt(time.split(':')[0]),
+        minute: parseInt(time.split(':')[1]),
+        repeats: true,
+    }
+    });
+
+    return result 
+}
+
+function getWeekdayNumber(day: any) {
+    switch (day) {
+        case 'DOM':
+            return 1;
+        case 'SEG':
+            return 2;
+        case 'TER':
+            return 3;
+        case 'QUA':
+            return 4;
+        case 'QUI':
+            return 5;
+        case 'SEX':
+            return 6;
+        case 'SAB':
+            return 7;
+        default:
+            return 0;
+    }
+}
 
   const clearInput = () => {
     setTimeInitial('');
@@ -84,44 +139,89 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
     onClose();  
   }
 
-  const UpdateTask = () => {
-    console.log(JSON.stringify(scheduleData))
+  const UpdateTask = async () => {
     const dayIndex = scheduleData.findIndex((item) => item.day === day);
     if (dayIndex === -1) {
       console.error('Day not found');
       return;
     }
-  
-    const activities = scheduleData[dayIndex].activities.map((activity: { id: string | undefined; }) =>
+
+    const activityToUpdate = scheduleData[dayIndex].activities.find((activity: { id: string | undefined; }) => activity.id === id);
+    if (!activityToUpdate) {
+      console.error('Activity not found');
+      return;
+    }
+
+    await deleteNotification(activityToUpdate.notificationId);
+
+    const updatedActivities = scheduleData[dayIndex].activities.map((activity: { id: string | undefined; }) =>
       activity.id === id ? { ...activity, time: timeInitial, endTime: timeEnd, description: task } : activity
     );
-  
+
+    const updatedActivity = updatedActivities.find((activity: { id: string | undefined; }) => activity.id === id);
+    if (!updatedActivity) {
+      console.error('Updated activity not found');
+      return;
+    }
+
+    const newNotificationId = await scheduleWeeklyNotification(day, updatedActivity.time, updatedActivity.description);
+
+    updatedActivity.notificationId = newNotificationId;
+
+
     setScheduleData((prevScheduleData) => {
       const newScheduleData = [...prevScheduleData];
-      newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+      newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities: updatedActivities };
+
+      AsyncStorage.setItem('scheduleData', JSON.stringify(newScheduleData)).then(() => {
+        console.log('Data saved to AsyncStorage');
+      }).catch((error) => {
+        console.error('Error saving data to AsyncStorage:', error);
+      });
+
       return newScheduleData;
     });
 
     clearInput();
-  }
+}
 
-  const DeleteTask = () => {
+
+  const DeleteTask = async () => {
     const dayIndex = scheduleData.findIndex((item) => item.day === day);
     if (dayIndex === -1) {
       console.error('Day not found');
       return;
     }
   
+    const activityToDelete = scheduleData[dayIndex].activities.find((activity: { id: string | undefined; }) => activity.id === id);
+    if (!activityToDelete) {
+      console.error('Activity not found');
+      return;
+    }
+
+    await deleteNotification(activityToDelete.notificationId);
+
     const activities = scheduleData[dayIndex].activities.filter((activity: { id: string | undefined; }) => activity.id !== id);
   
     setScheduleData((prevScheduleData) => {
       const newScheduleData = [...prevScheduleData];
       newScheduleData[dayIndex] = { ...newScheduleData[dayIndex], activities };
+
+      AsyncStorage.setItem('scheduleData', JSON.stringify(newScheduleData)).then(() => {
+        console.log('Data saved to AsyncStorage');
+      }).catch((error) => {
+        console.error('Error saving data to AsyncStorage:', error);
+      });
       return newScheduleData;
     });
 
     clearInput();
-  }
+}
+
+
+async function deleteNotification(notificationId: string) {
+    await Notifications.cancelScheduledNotificationAsync(notificationId);
+}
   
 
   return (
@@ -150,7 +250,7 @@ const ModalTask: React.FC<ModalTaskProps> = ({ isVisible, day, onClose, isEdit, 
                 keyboardType="numeric"
             />
             <TextInput
-                style={[styles.input, styles.halfInput]}
+                style={[styles.input]}
                 placeholder="Hora de Término"
                 value={timeEnd}
                 onBlur={() => setTimeEnd(formatarHora(timeEnd))}
@@ -227,10 +327,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     paddingHorizontal: 10,
     marginBottom: 20,
+    flex: 1,
   },
   halfInput: {
-    flex: 1,
-    marginRight: 10,
+    marginRight: 10
   },
   fullInput: {
     width: '100%',  

@@ -19,10 +19,16 @@
       "supportsTablet": true
     },
     "android": {
+      "useNextNotificationsApi": true,
+      "permissions": [
+        "NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.luizgustavo00.routinex",
+      "packageType": "apk"
     },
     "web": {
       "bundler": "metro",
@@ -34,6 +40,14 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "6eea9daa-8363-4b27-b969-9d0ba653dde1"
+      }
     }
   }
 }
